@@ -61,7 +61,7 @@ class Game extends React.Component {
     const history = this.state.history.slice(0, this.state.stepNumber + 1);
     const current = history[history.length - 1];
     const squares = current.squares.slice();
-    if (calculateWinner(squares) || squares[i]) {
+    if (calculateWinner(squares).winner || squares[i]) {
       return;
     }
     squares[i] = this.state.xIsNext ? 'X' : 'O';
@@ -92,8 +92,7 @@ class Game extends React.Component {
     const history = this.state.history;
     const current = history[this.state.stepNumber];
     const winInfo = calculateWinner(current.squares);
-    const winner = winInfo != null ? winInfo.winner : null;
-    const winLine = winInfo != null ? winInfo.winLine : null;
+    const winner = winInfo.winner;
 
     const moves = history.map((step, move) => {
       const xOrO = (move % 2) === 0 ? 'O' : 'X';
@@ -126,9 +125,11 @@ class Game extends React.Component {
 
     let status;
     if (winner) {
-      status = `Winner: ${winner} `;
+      status = `Winner: ${winner}`;
+    } else if (winInfo.isDraw) {
+      status = 'Game ends in a draw';
     } else {
-      status = `Next player: ${(this.state.xIsNext ? 'X' : 'O')} `;
+      status = `Next player: ${(this.state.xIsNext ? 'X' : 'O')}`;
     }
 
     return (
@@ -137,7 +138,7 @@ class Game extends React.Component {
           <Board
             squares={current.squares}
             onClick={i => this.handleClick(i)}
-            winLine={winLine}
+            winLine={winInfo.winLine}
           />
         </div>
         <div className="game-info">
@@ -174,10 +175,23 @@ function calculateWinner(squares) {
       return {
         winner: squares[a],
         winLine: lines[i],
+        isDraw: false
       };
     }
   }
-  return null;
+
+  let isDraw = true;
+  for (let i = 0; i < squares.length; i++) {
+    if (squares[i] === null) {
+      isDraw = false;
+      break;
+    }
+  }
+  return {
+    winner: null,
+    winLine: null,
+    isDraw: isDraw,
+  };
 }
 
 function calculateLocation(square) {
