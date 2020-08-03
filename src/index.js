@@ -17,6 +17,7 @@ class Board extends React.Component {
   renderSquare(i) {
     return (
       <Square
+        key={i}
         value={this.props.squares[i]}
         onClick={() => this.props.onClick(i)}
       />
@@ -30,7 +31,7 @@ class Board extends React.Component {
       for (let col = 0; col < 3; col++) {
         boardRow.push(this.renderSquare((row * 3) + col));
       }
-      boardSquares.push(<div className="board-row">{boardRow}</div>);
+      boardSquares.push(<div key={row} className="board-row">{boardRow}</div>);
     }
 
     return (
@@ -51,6 +52,7 @@ class Game extends React.Component {
       }],
       stepNumber: 0,
       xIsNext: true,
+      ascending: true,
     }
   }
 
@@ -79,6 +81,12 @@ class Game extends React.Component {
     })
   }
 
+  handleToggleClick() {
+    this.setState({
+      ascending: !this.state.ascending,
+    })
+  }
+
   render() {
     const history = this.state.history;
     const current = history[this.state.stepNumber];
@@ -87,24 +95,37 @@ class Game extends React.Component {
     const moves = history.map((step, move) => {
       const xOrO = (move % 2) === 0 ? 'O' : 'X';
       const location = step.mostRecentMoveLocation;
+      const bold = this.state.stepNumber === move;
       const desc = move ?
         `Go to move #${move} : ${xOrO} @ ${location}` :
         'Go to game start';
-      const bold = this.state.stepNumber === move;
-      return (
+
+      let moveList = [];
+      moveList.push(
         <li key={move}>
           <button style={{fontWeight: bold ? 'bold' : ''}} onClick={() => this.jumpTo(move)}>
             {desc}
           </button>
         </li>
       );
+
+      return (
+        moveList/*this.state.ascending ? moveList : descending*/
+      );
     });
+
+    let movesDescending = [...moves];
+    movesDescending.reverse();
+
+    const orderToggle = <button onClick={() => this.handleToggleClick()}>
+      {`Order ${this.state.ascending ? '^' : 'v'}`}
+    </button>;
 
     let status;
     if (winner) {
-      status = 'Winner: ' + winner;
+      status = `Winner: ${winner} `;
     } else {
-      status = 'Next player: ' + (this.state.xIsNext ? 'X' : 'O');
+      status = `Next player: ${(this.state.xIsNext ? 'X' : 'O')} `;
     }
 
     return (
@@ -117,7 +138,8 @@ class Game extends React.Component {
         </div>
         <div className="game-info">
           <div>{status}</div>
-          <ol>{moves}</ol>
+          <ol>{this.state.ascending ? moves : movesDescending}</ol>
+          <div>{orderToggle}</div>
         </div>
       </div>
     );
@@ -171,6 +193,7 @@ function calculateLocation(square) {
       return '(2, 3)';
     case 8:
       return '(3, 3)';
+    default:
   }
   return null;
 }
